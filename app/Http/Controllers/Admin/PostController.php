@@ -4,94 +4,61 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Post;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 class PostController extends Controller
 {
-    public function __construct() {
+    public function __construct()
+    {
 //        $this->middleware(['auth', 'clearance'])->except('index', 'show');
     }
 
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-
-
-    public function index() {
-        $data=array();
+    public function index(): View
+    {
+        $data = array();
         $data['posts'] = Post::orderby('id', 'desc')->paginate(5); //show only 5 items at a time in descending order
 
         return view('admin.pages.posts.index')->with($data);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create() {
+    public function create(): View
+    {
         return view('admin.pages.posts.create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request) {
-
-        //Validating title and body field
+    public function store(Request $request): RedirectResponse
+    {
         $this->validate($request, [
-            'title'=>'required|max:100',
-            'body' =>'required',
+            'title' => 'required|max:100',
+            'body'  => 'required',
         ]);
 
         $post = Post::create($request->only('title', 'body'));
 
-        //Display a successful message upon save
-        return redirect()->route('admin.posts.index')
-            ->with('msg', 'Article,
-             '. $post->title.' created');
+        return redirect(route('admin.posts.index'))->with('msg', 'Article, ' . $post->title . ' created');
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id) {
+    public function show($id): View
+    {
         $post = Post::findOrFail($id); //Find post of id = $id
 
-        return view ('admin.pages.posts.show', compact('post'));
+        return view('admin.pages.posts.show', compact('post'));
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function edit($id) {
+    public function edit($id): View
+    {
         $post = Post::findOrFail($id);
 
         return view('admin.pages.posts.edit', compact('post'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, $id) {
+    public function update(Request $request, $id): RedirectResponse
+    {
         $this->validate($request, [
-            'title'=>'required|max:100',
-            'body'=>'required',
+            'title' => 'required|max:100',
+            'body'  => 'required',
         ]);
 
         $post = Post::findOrFail($id);
@@ -99,25 +66,14 @@ class PostController extends Controller
         $post->body = $request->input('body');
         $post->save();
 
-        return redirect()->route('admin.posts.index',
-            $post->id)->with('msg',
-            'Article, '. $post->title.' updated');
-
+        return redirect(route('admin.posts.index', $post->id))->with('msg', 'Article, ' . $post->title . ' updated');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id) {
+    public function destroy($id): RedirectResponse
+    {
         $post = Post::findOrFail($id);
         $post->delete();
 
-        return redirect()->route('admin.posts.index')
-            ->with('msg',
-                'Article successfully deleted');
-
+        return redirect(route('admin.posts.index'))->with('msg', 'Article successfully deleted');
     }
 }

@@ -3,21 +3,23 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Models\User;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use Illuminate\View\View;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
-    public function index()
+    public function index(): View
     {
         $data = array();
         $data['users'] = User::all();
         return view('admin.pages.users.index')->with($data);
     }
 
-    public function create()
+    public function create():View
     {
         $data = array();
 
@@ -26,7 +28,7 @@ class UserController extends Controller
         return view('admin.pages.users.create')->with($data);
     }
 
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
         $userdata = $this->validate($request, [
             'name' => 'required|max:120',
@@ -39,33 +41,20 @@ class UserController extends Controller
         if ($request->has('roles')) {
             $user->roles()->attach($request->roles);
         }
-        //Checking if a role was selected
+
         if ($request->has('permissions')) {
             $user->permissions()->attach($request->permissions);
         }
-        //Redirect to the users.index view and display message
-        return redirect()->route('admin.users.index')
-            ->with('msg', 'User successfully added.');
+
+        return redirect(route('admin.users.index'))->with('msg', 'User successfully added.');
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param int $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
+    public function show($id): RedirectResponse
     {
         return redirect('admin.users.index');
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param int $id
-     * @return \Illuminate\Http\Response
-     */
-    public function edit($id)
+    public function edit($id): View
     {
         $data=array();
         $data['user'] = User::findOrFail($id); //Get user with specified id
@@ -78,54 +67,34 @@ class UserController extends Controller
 
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param \Illuminate\Http\Request $request
-     * @param int $id
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, $id)
+    public function update(Request $request, User $user): RedirectResponse
     {
-        $user = User::findOrFail($id); //Get role specified by id
-
-        //Validate name, email and password fields
         $user_data=$this->validate($request, [
             'name' => 'required|max:120',
-            'email' => 'required|email|unique:users,email,' . $id,
+            'email' => 'required|email|unique:users,email,' . $user->id,
         ]);
         $user->fill($user_data)->save();
 
         if ($request->has('roles')) {
-            $user->roles()->sync($request->roles);  //If one or more role is selected associate user to roles
+            $user->roles()->sync($request->roles);
         } else {
-            $user->roles()->detach(); //If no role is selected remove exisiting role associated to a user
+            $user->roles()->detach();
         }
-        if ($request->has('permissions')) {
 
+        if ($request->has('permissions')) {
             $user->permissions()->sync($request->permissions);
         }else{
-            $user->permissions()->detach(); //If no role is selected remove exisiting role associated to a user
+            $user->permissions()->detach();
         }
-        return redirect()->route('admin.users.index')
-            ->with('msg',
-                'User successfully edited.');
+
+        return redirect(route('admin.users.index'))->with('msg', 'User successfully edited.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param int $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
+    public function destroy($id): RedirectResponse
     {
-        //Find a user with a given id and delete
         $user = User::findOrFail($id);
         $user->delete();
 
-        return redirect()->route('admin.users.index')
-            ->with('msg',
-                'User successfully deleted.');
+        return redirect(route('admin.users.index'))->with('msg', 'User successfully deleted.');
     }
 }

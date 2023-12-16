@@ -2,14 +2,13 @@
 
 namespace App\Http\Controllers\Admin;
 
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use Auth;
-//Importing laravel-permission models
+
+use Illuminate\View\View;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
-
-use Session;
 
 class RoleController extends Controller
 {
@@ -19,43 +18,22 @@ class RoleController extends Controller
 //        $this->middleware(['auth', 'isAdmin']);//isAdmin middleware lets only users with a //specific permission permission to access these resources
     }
 
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index()
+    public function index(): View
     {
-        $data = array();
-        $data['roles'] = Role::with('permissions')->get();//Get all roles
-        return view('admin.pages.roles.index')->with($data);
+        return view('admin.pages.roles.index')->with(['roles' => Role::with('permissions')->get()]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
+    public function create(): View
     {
-        $data = array();
-        $data['permissions'] = Permission::all()->groupBy('module');//Get all permissions
-        return view('admin.pages.roles.create')->with($data);
+        return view('admin.pages.roles.create')->with(['permissions' => Permission::all()->groupBy('module')]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
-        //Validate name and permissions field
         $this->validate($request, [
-                'name' => 'required|unique:roles|max:10',
+                'name'         => 'required|unique:roles|max:10',
                 'display_name' => 'required|max:25',
-                'permissions' => 'required',
+                'permissions'  => 'required',
             ]
         );
 
@@ -64,31 +42,18 @@ class RoleController extends Controller
         $role->display_name = $request->display_name;
         $role->guard_name = 'web';
         $role->save();
-        $role->syncPermissions($request->permissions);
 
-        return redirect()->route('admin.roles.index')
-            ->with('msg',
-                'Role ' . $role->display_name . ' added!');
+        $role->permissions()->attach($request->permissions);
+
+        return redirect(route('admin.roles.index'))->with('msg', 'Role ' . $role->display_name . ' added!');
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param int $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
+    public function show($id): RedirectResponse
     {
         return redirect('roles');
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param int $id
-     * @return \Illuminate\Http\Response
-     */
-    public function edit($id)
+    public function edit($id): View
     {
         $data = array();
         $data['role'] = Role::findOrFail($id);
@@ -98,48 +63,31 @@ class RoleController extends Controller
         return view('admin.pages.roles.edit')->with($data);
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param \Illuminate\Http\Request $request
-     * @param int $id
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, $id)
+    public function update(Request $request, $id): RedirectResponse
     {
-        //Validate name and permission fields
         $this->validate($request, [
-                'name' => 'required|max:10|unique:roles,name,' . $id,
+                'name'         => 'required|max:10|unique:roles,name,' . $id,
                 'display_name' => 'required|max:25',
-                'permissions' => 'required',
+                'permissions'  => 'required',
             ]
         );
+
         $role = Role::findOrFail($id);//Get role with the given id
         $role->name = $request->name;
         $role->display_name = $request->display_name;
         $role->guard_name = 'web';
         $role->save();
-        $role->syncPermissions($request->permissions);
 
-        return redirect()->route('admin.roles.index')
-            ->with('msg',
-                'Role ' . $role->name . ' updated!');
+        $role->permissions()->sync($request->permissions);
+
+        return redirect(route('admin.roles.index'))->with('msg', 'Role ' . $role->name . ' updated!');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param int $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
+    public function destroy($id): RedirectResponse
     {
         $role = Role::findOrFail($id);
         $role->delete();
 
-        return redirect()->route('admin.roles.index')
-            ->with('msg',
-                'Role deleted!');
-
+        return redirect(route('admin.roles.index'))->with('msg', 'Role deleted!');
     }
 }
