@@ -26,12 +26,6 @@ class UserController extends Controller
         return view('admin.pages.users.create')->with($data);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\Response
-     */
     public function store(Request $request)
     {
         $userdata = $this->validate($request, [
@@ -40,17 +34,14 @@ class UserController extends Controller
             'password' => 'required|min:6|confirmed'
         ]);
 
-        $user = User::create($userdata); //Retrieving only the email and password data
+        $user = User::create($userdata);
 
-        //Checking if a role was selected
         if ($request->has('roles')) {
-
-            $user->assignRole($request->roles);
+            $user->roles()->attach($request->roles);
         }
         //Checking if a role was selected
         if ($request->has('permissions')) {
-
-            $user->givePermissionTo($request->permissions);
+            $user->permissions()->attach($request->permissions);
         }
         //Redirect to the users.index view and display message
         return redirect()->route('admin.users.index')
