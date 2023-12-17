@@ -96,9 +96,9 @@ class UserController extends Controller
 
     }
 
-    public function userDetailsById($id): JsonResponse
+    public function show($id): JsonResponse
     {
-        $user = User::where('id', $id)->first();
+        $user = User::whereId($id)->first();
 
         if ($user) {
             $response['user'] = new UserDetails($user);
@@ -113,7 +113,7 @@ class UserController extends Controller
         }
     }
 
-    public function userList(): JsonResponse
+    public function index(): JsonResponse
     {
         $response = array();
         $users = User::orderBy('id', 'desc')->get();
@@ -122,7 +122,7 @@ class UserController extends Controller
         return $this->successResponse($response);
     }
 
-    public function userCreate(Request $request): JsonResponse
+    public function store(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required',
@@ -143,14 +143,11 @@ class UserController extends Controller
         try {
             $user = User::create($input);
 
-            //Checking if a role was selected
             if ($request->has('roles')) {
-
                 $user->assignRole($request->roles);
             }
-            //Checking if a role was selected
-            if ($request->has('permissions')) {
 
+            if ($request->has('permissions')) {
                 $user->givePermissionTo($request->permissions);
             }
 
@@ -160,19 +157,17 @@ class UserController extends Controller
             $response['message'] = 'User Saved Successfully';
 
             return $this->successResponse($response);
-            // all good
         } catch (\Exception $e) {
             DB::rollback();
-            // something went wrong
             $response['message'] = 'User can not save properly';
 
             return $this->failureResponse($response);
         }
     }
 
-    public function userEdit(Request $request,$id): JsonResponse
+    public function update(Request $request,$id): JsonResponse
     {
-        $user = User::findOrFail($id); //Get role specified by id
+        $user = User::findOrFail($id);
         $validator = Validator::make($request->all(), [
             'name' => 'required|max:120',
             'email' => 'required|email|unique:users,email,' . $id,
@@ -192,15 +187,15 @@ class UserController extends Controller
             $user->fill($input)->save();
 
             if ($request->has('roles')) {
-                $user->roles()->sync($request->roles);  //If one or more role is selected associate user to roles
+                $user->roles()->sync($request->roles);
             } else {
-                $user->roles()->detach(); //If no role is selected remove exisiting role associated to a user
+                $user->roles()->detach();
             }
             if ($request->has('permissions')) {
 
                 $user->permissions()->sync($request->permissions);
             }else{
-                $user->permissions()->detach(); //If no role is selected remove exisiting role associated to a user
+                $user->permissions()->detach();
             }
 
             DB::commit();
@@ -217,7 +212,7 @@ class UserController extends Controller
         }
     }
 
-    public function userDelete($id): JsonResponse
+    public function delete($id): JsonResponse
     {
         $user = User::findOrFail($id);
 
