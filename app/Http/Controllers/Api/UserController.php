@@ -1,10 +1,11 @@
 <?php
 
-namespace App\Http\Controllers\api;
+namespace App\Http\Controllers\Api;
 
 use App\Http\Resources\UserDetails;
 use App\Http\Traits\ApiStatus;
-use App\User;
+use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
@@ -15,9 +16,8 @@ class UserController extends Controller
 {
     use ApiStatus;
 
-    public function login(Request $request)
+    public function login(Request $request): JsonResponse
     {
-
         $validator = Validator::make($request->all(), [
             'email' => 'required|email',
             'password' => 'required',
@@ -25,23 +25,24 @@ class UserController extends Controller
 
         if ($validator->fails()) {
             $response['message'] = $validator->errors()->first();
+
             return $this->failureResponse($response);
         }
 
         if (Auth::attempt(['email' => request('email'), 'password' => request('password')])) {
-
             $user = Auth::user();
             $response['token'] = 'Bearer ' . $user->createToken('Secret123456')->accessToken;
             $response['message'] = "Login Successfull";
+
             return $this->successResponse($response);
         } else {
             $response['message'] = "Credentials do not match";
+
             return $this->failureResponse($response);
         }
     }
 
-    /*Register function*/
-    public function register(Request $request)
+    public function register(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required',
@@ -51,6 +52,7 @@ class UserController extends Controller
 
         if ($validator->fails()) {
             $response['message'] = $validator->errors()->first();
+
             return $this->failureResponse($response);
         }
 
@@ -63,46 +65,55 @@ class UserController extends Controller
     }
 
 
-    public function logout(Request $request)
+    public function logout(Request $request): JsonResponse
     {
         if (Auth::check()) {
             Auth::user()->token()->revoke();
             $response['message'] = "Logout succesfull";
+
             return $this->successResponse($response);
         }
+
+        $response['message'] = "Unauthorised Attempt!";
+
+        return $this->failureResponse($response);
     }
 
-    public function userDetails()
+    public function userDetails(): JsonResponse
     {
         $user = Auth::user();
         if ($user) {
             $response['user'] = $user;
             $response['message'] = "User Information";
+
             return $this->successResponse($response);
         } else {
             $response['message'] = "No user found";
+
             return $this->failureResponse($response);
 
         }
 
     }
 
-    public function userDetailsById($id)
+    public function userDetailsById($id): JsonResponse
     {
         $user = User::where('id', $id)->first();
 
         if ($user) {
             $response['user'] = new UserDetails($user);
             $response['message'] = "User Information";
+
             return $this->successResponse($response);
         } else {
             $response['message'] = "No user found";
+
             return $this->failureResponse($response);
 
         }
     }
 
-    public function userList()
+    public function userList(): JsonResponse
     {
         $response = array();
         $users = User::orderBy('id', 'desc')->get();
@@ -111,7 +122,7 @@ class UserController extends Controller
         return $this->successResponse($response);
     }
 
-    public function userCreate(Request $request)
+    public function userCreate(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required',
@@ -121,6 +132,7 @@ class UserController extends Controller
 
         if ($validator->fails()) {
             $response['message'] = $validator->errors()->first();
+
             return $this->failureResponse($response);
         }
 
@@ -146,17 +158,19 @@ class UserController extends Controller
 
             $response['user'] = $user;
             $response['message'] = 'User Saved Successfully';
+
             return $this->successResponse($response);
             // all good
         } catch (\Exception $e) {
             DB::rollback();
             // something went wrong
             $response['message'] = 'User can not save properly';
+
             return $this->failureResponse($response);
         }
     }
 
-    public function userEdit(Request $request,$id)
+    public function userEdit(Request $request,$id): JsonResponse
     {
         $user = User::findOrFail($id); //Get role specified by id
         $validator = Validator::make($request->all(), [
@@ -166,6 +180,7 @@ class UserController extends Controller
 
         if ($validator->fails()) {
             $response['message'] = $validator->errors()->first();
+
             return $this->failureResponse($response);
         }
 
@@ -192,19 +207,18 @@ class UserController extends Controller
 
             $response['user'] = $user;
             $response['message'] = 'User Updated Successfully';
+
             return $this->successResponse($response);
-            // all good
         } catch (\Exception $e) {
             DB::rollback();
-            // something went wrong
             $response['message'] = 'User can not save properly';
+
             return $this->failureResponse($response);
         }
     }
 
-    public function userDelete($id)
+    public function userDelete($id): JsonResponse
     {
-        //Find a user with a given id and delete
         $user = User::findOrFail($id);
 
         DB::beginTransaction();
@@ -213,12 +227,12 @@ class UserController extends Controller
             $user->delete();
             DB::commit();
             $response['message'] = 'User Successfully Deleted';
+
             return $this->successResponse($response);
-            // all good
         } catch (\Exception $e) {
             DB::rollback();
-            // something went wrong
             $response['message'] = 'User can not Delete properly';
+
             return $this->failureResponse($response);
         }
     }
