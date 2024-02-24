@@ -103,6 +103,7 @@ class UserController extends Controller
 
         if ($user) {
             $response['user'] = new UserDetails($user);
+            $response['permissions'] = $user->getAllPermissions()->pluck('display_name', 'id');
             $response['message'] = "User Information";
 
             return $this->successResponse($response);
