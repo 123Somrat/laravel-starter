@@ -19,7 +19,7 @@ class UserController extends Controller
     public function login(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'email' => 'required|email',
+            'email'    => 'required|email',
             'password' => 'required',
         ]);
 
@@ -45,8 +45,8 @@ class UserController extends Controller
     public function register(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'required',
-            'email' => 'required|email|unique:users',
+            'name'     => 'required',
+            'email'    => 'required|email|unique:users',
             'password' => 'required'
         ]);
 
@@ -83,7 +83,8 @@ class UserController extends Controller
     {
         $user = Auth::user();
         if ($user) {
-            $response['user'] = new UserDetails($user);;
+            $response['user'] = new UserDetails($user);
+            $response['permissions'] = $user->getAllPermissions()->pluck('display_name', 'id');
             $response['message'] = "User Information";
 
             return $this->successResponse($response);
@@ -125,8 +126,8 @@ class UserController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'required',
-            'email' => 'required|email|unique:users',
+            'name'     => 'required',
+            'email'    => 'required|email|unique:users',
             'password' => 'required'
         ]);
 
@@ -165,11 +166,11 @@ class UserController extends Controller
         }
     }
 
-    public function update(Request $request,$id): JsonResponse
+    public function update(Request $request, $id): JsonResponse
     {
         $user = User::findOrFail($id);
         $validator = Validator::make($request->all(), [
-            'name' => 'required|max:120',
+            'name'  => 'required|max:120',
             'email' => 'required|email|unique:users,email,' . $id,
         ]);
 
@@ -194,7 +195,7 @@ class UserController extends Controller
             if ($request->has('permissions')) {
 
                 $user->permissions()->sync($request->permissions);
-            }else{
+            } else {
                 $user->permissions()->detach();
             }
 
