@@ -83,7 +83,7 @@ class UserController extends Controller
     {
         $user = Auth::user();
         if ($user) {
-            $response['user'] = $user;
+            $response['user'] = new UserDetails($user);;
             $response['message'] = "User Information";
 
             return $this->successResponse($response);
