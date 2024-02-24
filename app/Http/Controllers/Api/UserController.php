@@ -126,9 +126,11 @@ class UserController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'name'     => 'required',
-            'email'    => 'required|email|unique:users',
-            'password' => 'required'
+            'name'        => 'required',
+            'email'       => 'required|email|unique:users',
+            'password'    => 'required',
+            'roles'       => 'array',
+            'permissions' => 'array',
         ]);
 
         if ($validator->fails()) {
@@ -145,11 +147,11 @@ class UserController extends Controller
             $user = User::create($input);
 
             if ($request->has('roles')) {
-                $user->assignRole($request->roles);
+                $user->assignRole(array_map('intval', $request->roles));
             }
 
             if ($request->has('permissions')) {
-                $user->givePermissionTo($request->permissions);
+                $user->givePermissionTo(array_map('intval', $request->permissions));
             }
 
             DB::commit();
