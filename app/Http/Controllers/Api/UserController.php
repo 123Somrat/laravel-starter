@@ -172,8 +172,10 @@ class UserController extends Controller
     {
         $user = User::findOrFail($id);
         $validator = Validator::make($request->all(), [
-            'name'  => 'required|max:120',
-            'email' => 'required|email|unique:users,email,' . $id,
+            'name'        => 'required|max:120',
+            'email'       => 'required|email|unique:users,email,' . $id,
+            'roles'       => 'array',
+            'permissions' => 'array',
         ]);
 
         if ($validator->fails()) {
